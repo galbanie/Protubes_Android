@@ -62,18 +62,31 @@ class CompteManager extends DAO{
         }
     }
 
-    public function get($colonne, $value) {
+    public function get($colonne, $value, $method) { /* 
+    												$method = sert à préciser le type de renvoie de la méthode 
+    												il y a deux types de renvoies maintenant : 
+    												a) Si le parametre est '0' (zéro) : La méthode renvoie un $compte normal.
+    												b) Si le parametre est '1' : La méthode renvoie un $compte de type JSON pour Android. 
+    	*/
         try {
-            $requete = $this->bd->prepare("SELECT * FROM compte WHERE ".$colonne." = :colonne");
-            $requete->execute(array(':colonne' => $value));			
-            $resultat = $requete->fetch(PDO::FETCH_ASSOC);
+        	if ($method == 0){
+            	$requete = $this->bd->prepare("SELECT * FROM compte WHERE ".$colonne." = :colonne");
+            	$requete->execute(array(':colonne' => $value));			
+            	$resultat = $requete->fetch(PDO::FETCH_ASSOC);
 
-            if($resultat){
-                $compte = new Compte();
-                $compte->setTableauDonnees($resultat);			
-                $requete->closeCursor();
-                return $compte;
-            }			
+           	 	if($resultat){
+                	$compte = new Compte();
+                	$compte->setTableauDonnees($resultat);			
+                	$requete->closeCursor();
+                	return $compte;
+             	}
+             }else if ($method == 1){
+             	$request = "SELECT * FROM compte WHERE ".$colonne." = :colonne");
+             	$request->execute(array(':colonne' => $value));	
+             	$obj = $requete->fetch(PDO::FETCH_ASSOC);
+             	$json_obj = json_encode($obj); 
+             	return $json_obj; 
+             }			
             //$requete>closeCursor();
             return false;
         } catch (Exception $e) {
@@ -99,17 +112,29 @@ class CompteManager extends DAO{
         }
     }
 
-    public function getListAll() {
-        try {
-            $liste = new Liste();
-            $requete = $this->bd->query("SELECT * FROM compte");
-            while ($donnee = $requete->fetch(PDO::FETCH_ASSOC)){
-                $compte = new Compte();
-                $compte->setTableauDonnees($donnee);
-                $liste->add($compte);
+    public function getListAll($method) {/* 
+    												$method = sert à préciser le type de renvoie de la méthode 
+    												il y a deux types de renvoies maintenant : 
+    												a) Si le parametre est '0' (zéro) : La méthode renvoie une $liste normale.
+    												b) Si le parametre est '1' : La méthode renvoie une $liste de type JSON pour Android. 
+    	*/
+        	try {
+    		if ($method == 0){
+            	$liste = new Liste();
+            	$requete = $this->bd->query("SELECT * FROM compte");
+            	while ($donnee = $requete->fetch(PDO::FETCH_ASSOC)){
+                	$compte = new Compte();
+                	$compte->setTableauDonnees($donnee);
+                	$liste->add($compte);
+            	}
+            }else if ($method == 1 ){
+            	$request = $this->bd->query("SELECT * FROM compte"); 
+            	$obj = $request->fetchAll(); 
+            	$jsonObj = json_encode($obj); 
+            	return $jsonObj; 
             }
-            return $liste;
-        } catch (Exception $e) {
+            	return $liste;
+        	} catch (Exception $e) {
             TraceErreur::ecrireLog('./log.txt',$e->getTraceAsString(),"CompteManager", true);
             return false;
         }
